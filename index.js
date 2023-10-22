@@ -9,8 +9,3 @@ app.listen(process.env.PORT || 3001, () => {
 })
 
 connectDB()
-
-const userSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-});

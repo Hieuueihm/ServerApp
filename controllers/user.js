@@ -43,7 +43,7 @@ const handleLogin = async (req, res) => {
 
         if (user) {
             // Nếu user tồn tại, đồng thời email và captcha hợp lệ
-            return res.json({ status: 200, message: "Login successful" });
+            return res.json({ status: 200, message: "Login successful", _id: user._id, isNewUser: user.isNewUser });
         } else {
             // Nếu không tìm thấy user hoặc email và captcha không hợp lệ
             return res.json({ status: 401, message: "Invalid email or captcha" });
@@ -62,20 +62,66 @@ const handleLoginWithFacebook = async (req, res) => {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            return res.json({ success: true, message: 'Đăng nhập thành công' });
+            return res.json({ success: true, message: 'Đăng nhập thành công', _id: existingUser._id, isNewUser: existingUser.isNewUser });
         } else {
             const newUser = new User({ email, name });
             await newUser.save();
 
-            return res.json({ success: true, message: 'Tạo tài khoản thành công' });
+            return res.json({ success: true, message: 'Tạo tài khoản thành công', _id: newUser._id, isNewUser: user.isNewUser });
         }
     } catch (error) {
         return res.json({ success: false, error: error.message });
     }
 }
-const handleLoginWithGithub = async (req, res) => {
-    console.log("test")
 
+const handleGetInformation = async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        if (!user_id) {
+            return res.json({ success: false, error: "Missing user_id" });
+        }
+        const userInfo = await User.findById(user_id);
+
+        if (userInfo) {
+            return res.json({ success: true, userInfo: userInfo });
+        } else {
+            return res.json({ success: false, error: "User not found" });
+        }
+
+    } catch (error) {
+        return res.json({ success: false, error: error.message });
+    }
+
+}
+
+const handleEditInformation = async (req, res) => {
+    try {
+        const { user_id, name, dateOfBirth, gender, height, weight } = req.body;
+        const user = await User.findById(user_id);
+
+        if (!user) {
+            return res.json({ success: false, error: "User not found" });
+        }
+        user.name = name;
+        user.dateOfBirth = dateOfBirth;
+        user.gender = gender;
+        user.height = height;
+        user.weight = weight;
+        user.isNewUser = false;
+        if (req.file) {
+            user.avatar = req.file.path;
+        }
+
+        await user.save();
+
+        return res.json({ success: true, message: "User information updated successfully" });
+
+
+    } catch (error) {
+        return res.json({ success: false, error: error.message });
+
+
+    }
 }
 
 
@@ -83,5 +129,6 @@ module.exports = {
     getCaptcha: getCaptcha,
     handleLogin: handleLogin,
     handleLoginWithFacebook: handleLoginWithFacebook,
-    handleLoginWithGithub: handleLoginWithGithub
+    handleEditInformation: handleEditInformation,
+    handleGetInformation: handleGetInformation
 }

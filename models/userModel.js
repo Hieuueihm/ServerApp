@@ -10,17 +10,13 @@ const userSchema = new mongoose.Schema({
         default: ""
     },
     dateOfBirth: {
-        type: Date,
+        type: String,
         default: null,
     },
     gender: {
         type: String,
-        enum: ['male', 'female', 'other'],
-        default: "other",
-    },
-    age: {
-        type: Number,
-        default: 10// Giá trị mặc định là 18
+        enum: ['Male', 'Female', 'Other'],
+        default: "Other",
     },
     height: {
         type: Number,
@@ -31,7 +27,25 @@ const userSchema = new mongoose.Schema({
         default: 0,
     },
     avatar: {
-        type: String
+        type: String,
+        default: ''
+    },
+    isNewUser: {
+        type: Boolean,
+        default: true
+    },
+    targetStep: {
+        type: Number,
+        default: 0
+    }
+    ,
+    reminderDay: {
+        type: String,
+        default: ''
+    },
+    reminderTime: {
+        type: String,
+        default: ''
     },
     captcha: {
         type: Number,
