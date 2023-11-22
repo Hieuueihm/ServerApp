@@ -40,9 +40,19 @@ const userSchema = new mongoose.Schema({
     }
     ,
     reminderDay: {
+        type: [String],
+        default: []
+    },
+    isReminder: {
+        type: Boolean,
+        default: false
+    }
+    ,
+    dailyStartTime: {
         type: String,
         default: ''
-    },
+    }
+    ,
     reminderTime: {
         type: String,
         default: ''
@@ -50,6 +60,18 @@ const userSchema = new mongoose.Schema({
     captcha: {
         type: Number,
         default: null,
+    },
+    fcmtoken: {
+        type: String,
+        default: ''
+    },
+    isReceiveNotification: {
+        type: Boolean,
+        default: false
+    },
+    hasTrainingSchedule: {
+        type: Boolean,
+        default: false
     }
 },
     {

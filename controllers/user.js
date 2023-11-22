@@ -34,7 +34,7 @@ const getCaptcha = async (req, res) => {
 }
 
 const handleLogin = async (req, res) => {
-    const { email, captcha } = req.body;
+    const { email, captcha, fcmtoken } = req.body;
     // console.log(req.body)
 
     try {
@@ -42,6 +42,8 @@ const handleLogin = async (req, res) => {
         const user = await User.findOne({ email, captcha });
 
         if (user) {
+            user.fcmtoken = fcmtoken;
+            await user.save();
             // Nếu user tồn tại, đồng thời email và captcha hợp lệ
             return res.json({ status: 200, message: "Login successful", _id: user._id, isNewUser: user.isNewUser });
         } else {
@@ -55,19 +57,24 @@ const handleLogin = async (req, res) => {
 }
 
 const handleLoginWithFacebook = async (req, res) => {
-    const { email, name } = req.body;
+    const { email, name, fcmtoken } = req.body;
     console.log(email)
 
     try {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
+            existingUser.fcmtoken = fcmtoken;
+            await existingUser.save();
             return res.json({ success: true, message: 'Đăng nhập thành công', _id: existingUser._id, isNewUser: existingUser.isNewUser });
         } else {
             const newUser = new User({ email, name });
+            newUser.fcmtoken = fcmtoken;
             await newUser.save();
 
-            return res.json({ success: true, message: 'Tạo tài khoản thành công', _id: newUser._id, isNewUser: user.isNewUser });
+
+
+            return res.json({ success: true, message: 'Tạo tài khoản thành công', _id: newUser._id, isNewUser: newUser.isNewUser });
         }
     } catch (error) {
         return res.json({ success: false, error: error.message });
@@ -123,12 +130,98 @@ const handleEditInformation = async (req, res) => {
 
     }
 }
+const handleUpdateTarget = async (req, res) => {
+    try {
+        const { user_id, targetStep, reminderDay, reminderTime, isReminder, dailyStartTime } = req.body;
+        const user = await User.findById(user_id);
+        if (!user) {
+            return res.json({ success: false, error: "User not found" });
+        }
+
+        user.targetStep = targetStep;
+        user.reminderDay = reminderDay;
+        user.reminderTime = reminderTime;
+        user.isReminder = isReminder;
+        user.dailyStartTime = dailyStartTime;
+        user.hasTrainingSchedule = true;
 
 
+        await user.save();
+
+        return res.json({ success: true, message: "User target updated successfully" });
+
+    } catch (error) {
+        return res.json({ success: false, error: error.message });
+
+
+    }
+}
+
+const handleUpdateReceiveNotification = async (req, res) => {
+    try {
+        const { user_id, isReceiveNotification } = req.body;
+        const user = await User.findById(user_id);
+        if (!user) {
+            return res.json({ success: false, error: "User not found" });
+        }
+        user.isReceiveNotification = isReceiveNotification
+        await user.save()
+        return res.json({ success: true, message: "User notification updated successfully" });
+
+    } catch (error) {
+        return res.json({ success: false, error: error.message });
+
+    }
+}
+const handleLogout = async (req, res) => {
+    try {
+        const { user_id, fcmtoken } = req.body;
+        const user = await User.findById(user_id);
+        if (!user) {
+            return res.json({ success: false, error: "User not found" });
+        }
+        user.fcmtoken = fcmtoken;
+        user.save();
+        return res.json({ success: true, message: "User Logout successfully" })
+    } catch (error) {
+        return res.json({ success: false, error: error.message });
+    }
+}
+const handleDeleteTarget = async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        const user = await User.findById(user_id);
+        if (!user) {
+            return res.json({ success: false, error: "User not found" });
+        }
+
+        user.targetStep = null;
+        user.reminderDay = null;
+        user.reminderTime = null;
+        user.isReminder = null;
+        user.dailyStartTime = null;
+        user.hasTrainingSchedule = false;
+
+
+        await user.save();
+
+        return res.json({ success: true, message: "User target updated successfully" });
+
+    } catch (error) {
+        return res.json({ success: false, error: error.message });
+
+
+    }
+
+}
 module.exports = {
     getCaptcha: getCaptcha,
     handleLogin: handleLogin,
     handleLoginWithFacebook: handleLoginWithFacebook,
     handleEditInformation: handleEditInformation,
-    handleGetInformation: handleGetInformation
+    handleGetInformation: handleGetInformation,
+    handleUpdateTarget: handleUpdateTarget,
+    handleUpdateReceiveNotification: handleUpdateReceiveNotification,
+    handleLogout: handleLogout,
+    handleDeleteTarget: handleDeleteTarget
 }
