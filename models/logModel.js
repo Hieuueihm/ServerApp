@@ -9,7 +9,7 @@ const logSchema = new mongoose.Schema({
         default: false
 
     },
-    path: {
+    objectId: {
         type: String,
         default: ""
     }
