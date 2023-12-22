@@ -1,10 +1,10 @@
 const mongoose = require('mongoose')
 const logSchema = new mongoose.Schema({
-    prevLog: {
+    logout: {
         type: Boolean,
         default: false
     },
-    currentLog: {
+    login: {
         type: Boolean,
         default: false
 

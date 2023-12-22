@@ -9,7 +9,6 @@ admin.initializeApp({
 });
 
 
-
 const sendAllUserNotification = async () => {
     let resultWeather;
     fetchWeatherForecast()
@@ -33,15 +32,15 @@ const sendAllUserNotification = async () => {
 };
 const notificationContent = (resultWeather) => {
     return `
-    Nhiệt độ hiện tại là ${resultWeather?.current?.temp_c}
-    Khả năng mưa sắp tới là ${resultWeather?.forecast?.forecastday[0]?.hour[0]?.chance_of_rain} %
+Nhiệt độ hiện tại là ${resultWeather?.current?.temp_c}
+Khả năng mưa sắp tới là ${resultWeather?.forecast?.forecastday[0]?.hour[0]?.chance_of_rain} %
     `
 }
 const sendNotification = async (token, resultWeather) => {
 
     admin.messaging().send({
         notification: {
-            title: 'ADHFit weather notification',
+            title: 'ADHFit Weather Notification',
             body: notificationContent(resultWeather),
             imageUrl: 'https://my-cdn.com/app-logo.png',
         },

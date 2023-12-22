@@ -14,13 +14,18 @@ const heartRateSchema = new mongoose.Schema({
 const sleepSchema = new mongoose.Schema({
     // Define the structure for Giấc ngủ if needed
     // For example:
-    startTime: {
-        type: Date,
-        default: null
+    totalSleepTime: {
+        type: Number,
+        default: 0
     },
-    endTime: {
-        type: Date,
-        default: null
+    lightSleepTime: {
+        type: Number,
+        default: 0
+    },
+    deepSleepTime:
+    {
+        type: Number,
+        default: 0
     }
     // Add other relevant fields for sleep tracking
 }, { _id: false });
@@ -38,7 +43,8 @@ const spo2Schema = new mongoose.Schema({
 const daysSchema = new mongoose.Schema({
     day: {
         type: String,
-        default: ""
+        default: "",
+        unique: true
     },
     step: {
         type: Number,
@@ -47,6 +53,20 @@ const daysSchema = new mongoose.Schema({
     kcal: {
         type: Number,
         default: 0
+    },
+    distance: {
+        type: Number,
+        default: 0
+    },
+    airQuality: {
+        co2: {
+            type: Number,
+            default: 0
+        },
+        timestamps: {
+            type: String,
+            default: ""
+        }
     },
     heartRate: {
         avgHeartRate: [heartRateSchema],
@@ -67,23 +87,12 @@ const daysSchema = new mongoose.Schema({
 const stateSchema = new mongoose.Schema({
     objectId: {
         type: String,
-        default: ""
+        default: "",
+        unique: true
+
     },
     days: [daysSchema], // Reference to Day collection
-    airQuality: {
-        co2: {
-            type: Number,
-            default: 0
-        },
-        no2: {
-            type: Number,
-            default: 0
-        },
-        timestamps: {
-            type: String,
-            default: ""
-        }
-    }
+
 }, {
     timestamps: true,
     collection: 'state'

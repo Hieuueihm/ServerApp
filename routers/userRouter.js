@@ -1,7 +1,8 @@
 const { Router } = require('express')
 const router = Router()
 const { getCaptcha, handleLogin, handleLoginWithFacebook, handleEditInformation, handleGetInformation, handleUpdateTarget,
-    handleUpdateReceiveNotification, handleLogout, handleDeleteTarget
+    handleUpdateReceiveNotification, handleLogout, handleDeleteTarget, handleGetStateData, handleGetAllStateData,
+    handleAchieveResponseFromUser
 
 } = require('../controllers/user');
 const upload = require('../middlewares/upload')
@@ -15,6 +16,8 @@ router.post('/updateTarget', handleUpdateTarget)
 router.post('/updateNotification', handleUpdateReceiveNotification)
 router.post('/logout', handleLogout);
 router.post('/deleteTarget', handleDeleteTarget)
-
+router.post('/getStateFollowDay', handleGetStateData)
+router.post('/getAllStateData', handleGetAllStateData)
+router.post('/achieveResponseFromUser', handleAchieveResponseFromUser)
 
 module.exports = router

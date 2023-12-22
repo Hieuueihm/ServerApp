@@ -1,3 +1,4 @@
+const { Double } = require('mongodb');
 const mongoose = require('mongoose')
 const userSchema = new mongoose.Schema({
     email: {
@@ -26,6 +27,14 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    kcalRate: {
+        type: Number,
+        default: 1
+    },
+    distanceFootRate: {
+        type: Number,
+        default: 1
+    },
     avatar: {
         type: String,
         default: ''
@@ -35,6 +44,10 @@ const userSchema = new mongoose.Schema({
         default: true
     },
     targetStep: {
+        type: Number,
+        default: 0
+    },
+    targetKcal: {
         type: Number,
         default: 0
     }
@@ -57,6 +70,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    timeScheduleCreated:
+    {
+        type: String,
+        default: null
+    },
     captcha: {
         type: Number,
         default: null,
@@ -72,6 +90,14 @@ const userSchema = new mongoose.Schema({
     hasTrainingSchedule: {
         type: Boolean,
         default: false
+    },
+    targetCompleted: {
+        type: Number,
+        default: 0
+    },
+    timestampUpdated: {
+        type: String,
+        default: null
     }
 },
     {

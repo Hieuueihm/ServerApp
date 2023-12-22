@@ -1,6 +1,10 @@
 const User = require('../models/userModel')
-const sendMail = require('../utils/mailer')
+const State = require('../models/stateModel')
+const { sendEmailCaptcha, sendMailResponse } = require('../utils/mailer')
 const messageContent = require('../utils/messageContent');
+const Message = require('../models/messageModel')
+require("dotenv").config()
+
 const getCaptcha = async (req, res) => {
     const { email } = req.body;
 
@@ -11,18 +15,18 @@ const getCaptcha = async (req, res) => {
             const captcha = Math.floor(100000 + Math.random() * 900000);
             const newUser = new User({ email, captcha });
             await newUser.save();
-            sendMail(email, messageContent(email, captcha), captcha);
+            sendEmailCaptcha(email, messageContent(email, captcha), captcha);
             return await res.json({ status: 200, captcha }); // Trả về trạng thái và captcha
         } else {
             if (user.captcha && Date.now() - user.updatedAt.getTime() <= 15 * 60 * 1000) {
                 // Nếu user đã tồn tại và captcha còn hiệu lực, sử dụng lại captcha cũ
-                sendMail(email, messageContent(email, user.captcha), user.captcha);
+                sendEmailCaptcha(email, messageContent(email, user.captcha), user.captcha);
                 return await res.json({ status: 200, captcha: user.captcha });
             } else {
                 const captcha = Math.floor(100000 + Math.random() * 900000);
                 user.captcha = captcha;
-                user.save();
-                sendMail(email, messageContent(email, captcha), captcha);
+                await user.save();
+                sendEmailCaptcha(email, messageContent(email, captcha), captcha);
                 return await res.json({ status: 200, captcha });
             }
         }
@@ -114,6 +118,8 @@ const handleEditInformation = async (req, res) => {
         user.gender = gender;
         user.height = height;
         user.weight = weight;
+        user.kcalRate = 175;
+        user.distanceFootRate = 75; // m
         user.isNewUser = false;
         if (req.file) {
             user.avatar = req.file.path;
@@ -134,16 +140,28 @@ const handleUpdateTarget = async (req, res) => {
     try {
         const { user_id, targetStep, reminderDay, reminderTime, isReminder, dailyStartTime } = req.body;
         const user = await User.findById(user_id);
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+
+        // Lấy timestamp từ đối tượng Date đã được cập nhật
+        const timestampForDay = currentDate.getTime();
+
         if (!user) {
             return res.json({ success: false, error: "User not found" });
         }
+        const kcalRate = user.kcalRate;
+        const height = user.height;
 
         user.targetStep = targetStep;
+        const result = targetStep * (kcalRate / 10000) * height;
+        const resultInteger = parseInt(result, 10);
+        user.targetKcal = resultInteger;
         user.reminderDay = reminderDay;
         user.reminderTime = reminderTime;
         user.isReminder = isReminder;
         user.dailyStartTime = dailyStartTime;
         user.hasTrainingSchedule = true;
+        user.timeScheduleCreated = timestampForDay
 
 
         await user.save();
@@ -181,7 +199,7 @@ const handleLogout = async (req, res) => {
             return res.json({ success: false, error: "User not found" });
         }
         user.fcmtoken = fcmtoken;
-        user.save();
+        await user.save();
         return res.json({ success: true, message: "User Logout successfully" })
     } catch (error) {
         return res.json({ success: false, error: error.message });
@@ -201,6 +219,9 @@ const handleDeleteTarget = async (req, res) => {
         user.isReminder = null;
         user.dailyStartTime = null;
         user.hasTrainingSchedule = false;
+        user.timestampUpdated = "";
+        user.targetCompleted = 0;
+        user.timeScheduleCreated = "";
 
 
         await user.save();
@@ -214,6 +235,161 @@ const handleDeleteTarget = async (req, res) => {
     }
 
 }
+const handleGetStateData = async (req, res) => {
+    try {
+        const { objectId } = req.body;
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+        const timestampForDay = currentDate.getTime();
+        let existingState = await State.findOne({ objectId: objectId });
+
+        if (existingState) {
+            const existingDay = await existingState.days.find(day => day.day == timestampForDay);
+
+            if (existingDay) {
+                // Return specific information for the existing day
+                return res.status(200).json({
+                    success: true,
+                    message: "data found",
+                    todayInfo: existingDay
+                });
+            } else {
+
+                const newExtDay = {
+                    // Add properties for the new extDay as needed
+                    day: timestampForDay,
+                    step: 0,
+                    kcal: 0,
+                    distance: 0,
+                    sleep: {
+                        totalTimeSleep: 0,
+                        lightTimeSleep: 0,
+                        deepTimeSleep: 0
+                    },
+                    heartRate: {
+                        currentHeartRate: 0,
+                        currentSpo2: 0,
+                        avgHeartRate: [],
+                        avgSpo2: []
+                    },
+                    airQuality: {
+                        co2: 0,
+                        timestamps: new Date().getTime()
+                    }
+                };
+
+
+                await existingState.days.push(newExtDay)
+                await existingState.save();
+
+                return res.status(202).json({
+                    success: true,
+                    message: "no data for the current day",
+                    todayInfo: newExtDay
+                });
+            }
+        } else {
+            // If no existing state is found, you might decide to return an empty object or a specific message
+            const newAvgHeartRateValue = 0;
+            const newAvgSpo2Value = 0;
+
+            const newAvgHeartRate = {
+                timestamp: new Date().getTime(),
+                value: newAvgHeartRateValue
+            };
+
+            const newAvgSpo2 = {
+                timestamp: new Date().getTime(),
+                value: newAvgSpo2Value
+            };
+
+            const newExistingState = new State({
+                // Khai báo các trường khác của newExistingState nếu có,
+                objectId: objectId,
+                days: [{
+                    day: timestampForDay,
+                    sleep: {
+                        totalTimeSleep: 0,
+                        lightTimeSleep: 0,
+                        deepTimeSleep: 0
+                    },
+                    step: 0,
+                    kcal: 0,
+                    distance: 0,
+                    heartRate: {
+                        currentHeartRate: 0,
+                        currentSpo2: 0,
+                        avgHeartRate: [newAvgHeartRate],
+                        avgSpo2: [newAvgSpo2]
+                    },
+                    airQuality: {
+                        co2: 0,
+                        timestamps: new Date().getTime()
+                    }
+                }],
+
+            });
+
+            // Lưu vào cơ sở dữ liệu
+            await newExistingState.save();
+
+            return res.status(203).json({
+                success: true,
+                message: "no existing state found",
+                todayInfo: {}
+            });
+        }
+
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ success: false })
+    }
+}
+const handleGetAllStateData = async (req, res) => {
+    try {
+        const { objectId } = req.body;
+
+
+        let existingState = await State.findOne({ objectId: objectId });
+
+        if (existingState) {
+            return res.status(200).json({ success: 'true', data: existingState });
+        } else {
+            return res.status(200).json({ success: false, data: {} })
+        }
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ success: false });
+    }
+}
+
+
+const handleAchieveResponseFromUser = async (req, res) => {
+    try {
+        const { userName, email, message } = req.body;
+        const newMessage = new Message({
+            name: userName,
+            email: email,
+            message: message
+        });
+
+        await newMessage.save();
+
+        sendMailResponse(process.env.MAIL_ADMIN, message);
+
+        return res.status(200).json({ success: true })
+
+
+
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ success: false });
+    }
+}
+
 module.exports = {
     getCaptcha: getCaptcha,
     handleLogin: handleLogin,
@@ -223,5 +399,8 @@ module.exports = {
     handleUpdateTarget: handleUpdateTarget,
     handleUpdateReceiveNotification: handleUpdateReceiveNotification,
     handleLogout: handleLogout,
-    handleDeleteTarget: handleDeleteTarget
+    handleDeleteTarget: handleDeleteTarget,
+    handleGetStateData: handleGetStateData,
+    handleGetAllStateData: handleGetAllStateData,
+    handleAchieveResponseFromUser
 }
