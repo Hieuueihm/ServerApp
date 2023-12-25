@@ -11,6 +11,9 @@ const historySportSchema = new mongoose.Schema({
     },
     longitude: {
         type: [Number]
+    },
+    timestamp: {
+        type: [Number]
     }
 }, { timestamps: true })
 const mapSchema = new mongoose.Schema({

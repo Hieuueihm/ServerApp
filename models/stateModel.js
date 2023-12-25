@@ -44,7 +44,6 @@ const daysSchema = new mongoose.Schema({
     day: {
         type: String,
         default: "",
-        unique: true
     },
     step: {
         type: Number,
@@ -88,7 +87,6 @@ const stateSchema = new mongoose.Schema({
     objectId: {
         type: String,
         default: "",
-        unique: true
 
     },
     days: [daysSchema], // Reference to Day collection

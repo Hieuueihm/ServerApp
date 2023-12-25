@@ -340,8 +340,38 @@ const handleGetAllStateData = async (req, res) => {
         return res.status(400).json({ success: 'false' })
     }
 }
+const handleGetWeeklyTimeSleep = async (req, res) => {
+    try {
+        const { objectId, currentTimeStamp } = req.body
+
+
+        const existingState = await State.findOne({ objectId });
+        // console.log(timestampsForWeek)
+        if (existingState) {
+            // const matchedDays = existingState.days
+            //     .filter(day => timestampsForWeek.includes(parseInt(day.day)))
+            //     .map(day => { return { 'sleep': day.sleep, 'timestamp': day.day } });
+            // // console.log(matchedDays)
+            data = existingState.days
+            // console.log(data)
+
+
+            return res.status(200).json({ success: true, data: data })
+        } else {
+            return res.status(200).json({ success: false, message: 'user doesnt exist' })
+        }
+
+
+
+
+    } catch (error) {
+        console.error('Error handle get weekly time sleep', error);
+        return res.status(400).json({ success: false })
+    }
+}
 module.exports = {
     handlePostStateData: handlePostStateData,
     handleGetStateData, handleGetStateData,
-    handleGetAllStateData: handleGetAllStateData
+    handleGetAllStateData: handleGetAllStateData,
+    handleGetWeeklyTimeSleep
 }
